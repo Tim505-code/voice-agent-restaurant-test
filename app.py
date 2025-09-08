@@ -284,3 +284,26 @@ def health():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5001, debug=True)
+# --- Route de test Airtable (diagnostic rapide) ---
+from datetime import datetime
+import os
+from pyairtable import Table
+
+@app.route("/airtable-ping", methods=["GET"])
+def airtable_ping():
+    api = os.getenv("AIRTABLE_API_KEY")  # (chez toi c'est bien AIRTABLE_API_KEY)
+    base = os.getenv("AIRTABLE_BASE_ID")
+    tbl  = os.getenv("AIRTABLE_TABLE_RES", "Reservations")
+    try:
+        t = Table(api, base, tbl)
+        rec = t.create({
+            "Name": "Ping Test",
+            "Phone": "+41000000000",
+            "People": 2,
+            "Date": datetime.now().strftime("%Y-%m-%d"),
+            "Time": "19:30",
+            "Notes": "ping"
+        })
+        return {"ok": True, "id": rec.get("id")}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}, 500
