@@ -290,20 +290,15 @@ import os
 from pyairtable import Table
 
 @app.route("/airtable-ping", methods=["GET"])
-def airtable_ping():
-    api = os.getenv("AIRTABLE_API_KEY")  # (chez toi c'est bien AIRTABLE_API_KEY)
+def save_reservation_to_airtable(name, phone, people, date_str, time_str, notes):
+    api = os.getenv("AIRTABLE_API_KEY")
     base = os.getenv("AIRTABLE_BASE_ID")
     tbl  = os.getenv("AIRTABLE_TABLE_RES", "Reservations")
-    try:
-        t = Table(api, base, tbl)
-        rec = t.create({
-            "Name": "Ping Test",
-            "Phone": "+41000000000",
-            "People": 2,
-            "Date": datetime.now().strftime("%Y-%m-%d"),
-            "Time": "19:30",
-            "Notes": "ping"
-        })
-        return {"ok": True, "id": rec.get("id")}
-    except Exception as e:
-        return {"ok": False, "error": str(e)}, 500
+    Table(api, base, tbl).create({
+        "Name": name,
+        "Phone": phone,
+        "People": int(people),
+        "Date": date_str,     # format YYYY-MM-DD
+        "Time": time_str,     # ex. "19:30"
+        "Notes": notes or ""
+    })
