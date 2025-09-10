@@ -2,6 +2,7 @@
 
 import os, re
 from datetime import datetime, timedelta
+from urllib.parse import quote, unquote   # <-- pour encoder/decoder l'URL de retour
 from flask import Flask, request, Response
 from twilio.twiml.voice_response import VoiceResponse, Gather
 from pyairtable import Table
@@ -329,7 +330,8 @@ def name_check():
     if "oui" in answer or "c'est ça" in answer or "c est ca" in answer or "correct" in answer:
         say_fr(vr, f"Parfait, merci {candidate}.")
         ret = request.args.get("return", "/voice")
-        vr.redirect(ret + f"&name={candidate}")
+        ret_url = unquote(ret)  # <-- decode l'URL d'origine
+        vr.redirect(ret_url + f"&name={candidate}")
         return xml(vr)
     g = gather_speech("/name/spell", timeout="auto")
     g.say(ssml("Très bien. Pouvez-vous épeler votre prénom ? "
@@ -347,7 +349,8 @@ def name_spell():
     final_name = cleanup_spelling(spelled)
     say_fr(vr, f"Merci {final_name}.")
     ret = request.args.get("return", "/voice")
-    vr.redirect(ret + f"&name={final_name}")
+    ret_url = unquote(ret)  # <-- decode l'URL d'origine
+    vr.redirect(ret_url + f"&name={final_name}")
     return xml(vr)
 
 # ---------- Webhooks Twilio ----------
@@ -437,7 +440,8 @@ def resa():
 
         # → Nouveau : déléguer la capture du prénom au flux /name/*
         ret = f"/resa?step=notes&people={people}&date={date_iso}&time={time_hhmm}"
-        vr.redirect(f"/name/start?return={ret}")
+        ret_q = quote(ret, safe="")              # <-- encode (critique)
+        vr.redirect(f"/name/start?return={ret_q}")
         return xml(vr)
 
     # 4) notes + enregistrement Airtable
